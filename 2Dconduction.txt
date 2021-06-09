@@ -1,0 +1,407 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ConsoleApp2
+{
+    class Program
+    {
+        public static double step_find(double dis, double step)
+        {
+            double step_dis = dis / (step - 1);
+            return step;
+        }
+        public static double x_cond(double k, double dy, double dx, double T1, double T0)
+        {
+            double Dy = dy / 1000;
+            double Dx = dx / 1000;
+            double q = -k * Dy * ((T1 - T0) / Dx);
+            return q;
+        }
+        public static double x_cond_h(double k, double dy, double dx, double T1, double T0)
+        {
+            double Dy = dy / 1000;
+            double Dx = dx / 1000;
+            double q = -k * Dy / 2 * ((T1 - T0) / Dx);
+            return q;
+        }
+        static double x_conv_under(double h, double dy, double TS, double T0)
+        {
+            double Dy = dy / 1000;
+            double q = h * Dy * (TS - T0);
+            return q;
+        }
+        static double x_conv_under_h(double h, double dy, double TS, double T0)
+        {
+            double Dy = dy / 1000;
+            double q = h * Dy * (TS - T0);
+            return q;
+        }
+        static double x_conv_top(double h, double dy, double TS, double T0)
+        {
+            double Dy = dy / 1000;
+            double q = h * Dy * (T0 - TS);
+            return q;
+        }
+        static double x_conv_top_h(double h, double dy, double TS, double T0)
+        {
+            double Dy = dy / 1000;
+            double q = h * Dy / 2 * (T0 - TS);
+            return q;
+        }
+        public static double y_cond(double k, double dx, double dy, double T1, double T0)
+        {
+            double Dx = dx / 1000;
+            double Dy = dy / 1000;
+            double q = -k * Dx * ((T1 - T0) / Dy);
+            return q;
+        }
+        public static double y_cond_h(double k, double dx, double dy, double T1, double T0)
+        {
+            double Dx = dx / 1000;
+            double Dy = dy / 1000;
+            double q = -k * Dx / 2 * ((T1 - T0) / Dy);
+            return q;
+        }
+        static double y_conv_bot(double h, double dx, double TS, double T0)
+        {
+            double Dx = dx / 1000;
+            double q = h * Dx * (TS - T0);
+            return q;
+        }
+        static double y_conv_bot_h(double h, double dx, double TS, double T0)
+        {
+            double Dx = dx / 1000;
+            double q = h * Dx / 2 * (TS - T0);
+            return q;
+        }
+        static double y_conv_top(double h, double dx, double TS, double T0)
+        {
+            double Dx = dx / 1000;
+            double q = h * Dx * (T0 - TS);
+            return q;
+        }
+        static double y_conv_top_h(double h, double dx, double TS, double T0)
+        {
+            double Dx = dx / 1000;
+            double q = h * Dx / 2 * (T0 - TS);
+            return q;
+        }
+        static double q_find(double q0, double q1, double q2)
+        {
+            double q = q0 + q1 - q2;
+            return q;
+        }
+        static double t_find(double q, double k, double a, double d, double T0)
+        {
+            double A = a / 1000;
+            double D = d / 1000;
+            double T1 = ((D * q) / (-k * A)) + T0;
+            return T1;
+        }
+        static double t_find_h(double q, double k, double a, double d, double T0)
+        {
+            double A = a / 1000;
+            double D = d / 1000;
+            double T1 = ((D * 2 * q) / (-k * A)) + T0;
+            return T1;
+        }
+        static double t_next_top(double k, double h, double cell_x, double cell_y, double T0, double T2, double T3, double TS)
+        {
+            double q0 = x_cond_h(k, cell_y, cell_x, T2, T0);
+            double q1 = y_conv_top(h, cell_x, TS, T2);
+            double q3 = y_cond(k, cell_x, cell_y, T2, T3);
+            double q2 = q_find(q0, q3, q1);
+            double t_next = t_find_h(q2, k, cell_y, cell_x, T2);
+            return t_next;
+        }
+        static double t_next_middle(double k, double cell_x, double cell_y, double T0, double T1, double T2, double T3)
+        {
+            double q0 = x_cond(k, cell_y, cell_x, T2, T0);
+            double q1 = y_cond(k, cell_x, cell_y, T1, T2);
+            double q3 = y_cond(k, cell_x, cell_y, T2, T3);
+            double q2 = q_find(q0, q3, q1);
+            double t_next = t_find(q2, k, cell_y, cell_x, T2);
+            return t_next;
+        }
+        static double t_next_bottom(double k, double h, double cell_x, double cell_y, double TS, double T0, double T1, double T2)
+        {
+            double q0 = x_cond_h(k, cell_y, cell_x, T2, T0);
+            double q1 = y_cond(k, cell_x, cell_y, T1, T2);
+            double q3 = y_conv_bot(h, cell_x, TS, T2);
+            double q2 = q_find(q0, q3, q1);
+            double t_next = t_find_h(q2, k, cell_y, cell_x, T2);
+            return t_next;
+        }
+        static double q2_find_top(double k, double h, double cell_x, double cell_y, double T0, double T2, double T3, double TS)
+        {
+            double q0 = x_cond_h(k, cell_y, cell_x, T2, T0);
+            double q1 = y_conv_top_h(h, cell_x, TS, T0);
+            double q3 = y_cond_h(k, cell_x, cell_y, T2, T3);
+            double q2 = q_find(q0, q3, q1);
+            return q2;
+        }
+        static double q2_find_middle(double k, double cell_x, double cell_y, double T0, double T1, double T2, double T3)
+        {
+            double q0 = x_cond(k, cell_y, cell_x, T2, T0);
+            double q1 = y_cond_h(k, cell_x, cell_y, T1, T2);
+            double q3 = y_cond_h(k, cell_x, cell_y, T2, T3);
+            double q2 = q_find(q0, q3, q1);
+            return q2;
+        }
+        static double q2_find_bottom(double k, double h, double cell_x, double cell_y, double TS, double T0, double T1, double T2)
+        {
+            double q0 = x_cond_h(k, cell_y, cell_x, T2, T0);
+            double q1 = y_cond_h(k, cell_x, cell_y, T1, T2);
+            double q3 = y_conv_bot_h(h, cell_x, TS, T2);
+            double q2 = q_find(q0, q3, q1);
+            return q2;
+        }
+        static double corr_find(double thirdbc, double q2, double rexx)
+        {
+            double err = thirdbc - q2;
+            double corr = err * rexx;
+            return corr;
+        }
+        static void Main(string[] args)
+        {
+            //dizinin 2. indisi malzeme 4. indisi 1. bölge 6.inisi 2.bölge 8. indisi 3.bölge 10. indisi 4. bölge 12.indisi hava sıcaklıgı
+
+            StreamReader sınırkosulu = new StreamReader("C:\\Users\\Sinan\\Desktop\\Visual Studio\\2d_conductıon_2d\\sınırkosulu.inf");
+            string oku = sınırkosulu.ReadToEnd();
+            sınırkosulu.Close();
+            sınırkosulu.Dispose();
+            string[] sınır_kosulu = oku.Split(';');
+            int k_cons = Convert.ToInt16(sınır_kosulu[1]);
+            int firstbc = Convert.ToInt16(sınır_kosulu[3]);
+            int secondbc = Convert.ToInt16(sınır_kosulu[5]); 
+            int thirdbc = Convert.ToInt16(sınır_kosulu[7]); 
+            int fourthbc = Convert.ToInt16(sınır_kosulu[9]); 
+            int T_surr = Convert.ToInt16(sınır_kosulu[11]); 
+            //dizinin 2. indisi yatay bölme 4. indisi yatay uzunluk 6. indisi dikey bölme 8. indisi dikey uzunluk
+            StreamReader bölme = new StreamReader("C:\\Users\\Sinan\\Desktop\\Visual Studio\\2d_conductıon_2d\\node.inf");
+            string oku1 = bölme.ReadToEnd();
+            bölme.Close();
+            bölme.Dispose();
+            string[] node = oku1.Split(';');
+            int x_step = Convert.ToInt16(node[1]);
+            int x_dis = Convert.ToInt16(node[3]);
+            int y_step = Convert.ToInt16(node[5]);
+            int y_dis = Convert.ToInt16(node[7]);
+            double dx = x_dis / (x_step - 1);
+            double dy = y_dis / (y_step - 1);
+            // dizinin 2. indisi rex sayısı 4. inidisi hata değeri
+            StreamReader num = new StreamReader("C:\\Users\\Sinan\\Desktop\\Visual Studio\\2d_conductıon_2d\\numeric.inf");
+            string oku2 = num.ReadToEnd();
+            num.Close();
+            num.Dispose();
+            string[] numeric = oku2.Split(';');
+            double rexx = Convert.ToDouble(numeric[1]);
+            double err = Convert.ToDouble(numeric[3]);
+            Console.WriteLine(err);
+            double[,] T = new double[y_step, x_step];
+            int x_line = 0;
+            int y_line = 0;
+            while (true)
+            {
+                if (y_line == y_step)
+                {
+                    x_line = x_line + 1;
+                    break;
+                }
+                T[y_line, x_line] = firstbc;
+                Console.WriteLine(T[y_line, x_line] + "   T" + "[" + y_line + "," + x_line + "]" + "  sıcaklık");
+                y_line = y_line + 1;
+            }
+            y_line = 0;
+            //tahmin yaptırma
+            while (true)
+            {
+                if (y_line == y_step)
+                {
+                    x_line = x_line + 1;
+                    break;
+                }
+                Console.WriteLine("T" + "[" + y_line + "," + x_line + "]" + " sıcaklığı tahmin edin");
+                T[y_line, x_line] = Convert.ToDouble(Console.ReadLine());
+                Console.WriteLine(T[y_line, x_line] + "   T" + "[" + y_line + "," + x_line + "]" + "  sıcaklık");
+                y_line = y_line + 1;
+            }
+            y_line = 0;
+            while (true)
+            {
+                if (y_line == 0 && x_line < x_step)
+                {
+                    T[y_line, x_line] = t_next_top(k_cons, secondbc, dx, dy, T[y_line, x_line - 2], T[y_line, x_line - 1], T[y_line + 1, x_line - 1], T_surr);
+                    //Console.WriteLine("T"+"[" + y_line + "," + x_line + "]" + "sıcaklık   " + T[y_line, x_line]);
+                    y_line = y_line + 1;
+                }
+                else if (y_line == y_step - 1)
+                {
+                    T[y_line, x_line] = t_next_bottom(k_cons, fourthbc, dx, dy, T_surr, T[y_line, x_line - 2], T[y_line - 1, x_line - 1], T[y_line, x_line - 1]);
+                    //Console.WriteLine("T"+"[" + y_line + "," + x_line + "]" + "sıcaklık   " + T[y_line, x_line]);
+                    y_line = 0;
+                    x_line = x_line + 1;
+                }
+                else if(y_line != 0 && y_line != y_step - 1)
+                {
+                    T[y_line, x_line] = t_next_middle(k_cons, dx, dy, T[y_line, x_line - 2], T[y_line - 1, x_line - 1], T[y_line, x_line - 1], T[y_line + 1, x_line - 1]);
+                    //Console.WriteLine("T"+"[" + y_line + "," + x_line + "]" + "sıcaklık    " + T[y_line, x_line]);
+                    y_line = y_line + 1;
+                }
+                else if (x_line == x_step)
+                {
+                    x_line = x_line - 1;
+                    break;
+                }
+            }
+            double[] q2 = new double[y_step];
+            double[] corr = new double[y_step];
+            while (true)
+            {
+                if (y_line == 0)
+                {
+                    q2[y_line] = q2_find_top(k_cons, secondbc, dx, dy, T[y_line, x_line - 1], T[y_line, x_line], T[y_line + 1, x_line], T_surr);
+                    //Console.WriteLine(q2[y_line]);
+                    corr[y_line] = corr_find(thirdbc, q2[y_line], rexx);
+                    //Console.WriteLine(y_line + "." + "corr değeri  " + corr[y_line]);
+                    T[y_line,1] = T[y_line, 1] - corr[y_line];
+                    //Console.WriteLine("1.iter sonucu   " + T[y_line, 1]);
+                    y_line = y_line + 1;
+                }
+                else if (y_line == y_step - 1)
+                {
+                    q2[y_line] = q2_find_bottom(k_cons, fourthbc, dx, dy, T_surr, T[y_line, x_line - 1], T[y_line - 1, x_line], T[y_line, x_line]);
+                    //Console.WriteLine(q2[y_line]);
+                    corr[y_line] = corr_find(thirdbc, q2[y_line], rexx);
+                    //Console.WriteLine(y_line + "." + "corr değeri  " + corr[y_line]);
+                    T[y_line, 1] = T[y_line, 1] - corr[y_line];
+                    //Console.WriteLine("1.iter sonucu   " + T[y_line, 1]);
+                    y_line = y_line + 1;
+                }
+                else if (y_line != y_step - 1 && y_line != 0 && y_line < y_step)
+                {
+                    q2[y_line] = q2_find_middle(k_cons, dx, dy, T[y_line, x_line - 1], T[y_line - 1, x_line], T[y_line, x_line], T[y_line + 1, x_line]);
+                    //Console.WriteLine(q2[y_line]);
+                    corr[y_line] = corr_find(thirdbc, q2[y_line], rexx);
+                    //Console.WriteLine(y_line + "." + "corr değeri  " + corr[y_line]);
+                    T[y_line, 1] = T[y_line, 1] - corr[y_line];
+                    //Console.WriteLine("1.iter sonucu   " + T[y_line, 1]);
+                    y_line = y_line + 1;
+                }
+                else if (y_line == y_step)
+                {
+                    break;
+                }
+            }
+            int iter = 1;
+            while (true)
+            {
+                Console.WriteLine(iter + ". iterasyon");
+                iter = iter + 1;
+                y_line = 0;
+                x_line = 2;
+                while (true)
+                {
+                    if (y_line == 0 && x_line < x_step)
+                    {
+                        T[y_line, x_line] = t_next_top(k_cons, secondbc, dx, dy, T[y_line, x_line - 2], T[y_line, x_line - 1], T[y_line + 1, x_line - 1], T_surr);
+                        //Console.WriteLine("T" + "[" + y_line + "," + x_line + "]" + "sıcaklık   " + T[y_line, x_line]);
+                        y_line = y_line + 1;
+                    }
+                    else if (y_line == y_step - 1)
+                    {
+                        T[y_line, x_line] = t_next_bottom(k_cons, fourthbc, dx, dy, T_surr, T[y_line, x_line - 2], T[y_line - 1, x_line - 1], T[y_line, x_line - 1]);
+                        //Console.WriteLine("T" + "[" + y_line + "," + x_line + "]" + "sıcaklık   " + T[y_line, x_line]);
+                        y_line = 0;
+                        x_line = x_line + 1;
+                    }
+                    else if (y_line != 0 && y_line != y_step - 1)
+                    {
+                        T[y_line, x_line] = t_next_middle(k_cons, dx, dy, T[y_line, x_line - 2], T[y_line - 1, x_line - 1], T[y_line, x_line - 1], T[y_line + 1, x_line - 1]);
+                        //Console.WriteLine("T" + "[" + y_line + "," + x_line + "]" + "sıcaklık    " + T[y_line, x_line]);
+                        y_line = y_line + 1;
+                    }
+                    else if (x_line == x_step)
+                    {
+                        x_line = x_line - 1;
+                        break;
+                    }
+                }
+                while (true)
+                {
+                    if (y_line == 0)
+                    {
+                        q2[y_line] = q2_find_top(k_cons, secondbc, dx, dy, T[y_line, x_line - 1], T[y_line, x_line], T[y_line + 1, x_line], T_surr);
+                        //Console.WriteLine(q2[y_line]);
+                        corr[y_line] = corr_find(thirdbc, q2[y_line], rexx);
+                        Console.WriteLine(y_line + "." + "corr değeri  " + corr[y_line]);
+                        T[y_line, 1] = T[y_line, 1] - corr[y_line];
+                        //Console.WriteLine("1.iter sonucu   " + T[y_line, 1]);
+                        y_line = y_line + 1;
+                    }
+                    else if (y_line == y_step - 1)
+                    {
+                        q2[y_line] = q2_find_bottom(k_cons, fourthbc, dx, dy, T_surr, T[y_line, x_line - 1], T[y_line - 1, x_line], T[y_line, x_line]);
+                        //Console.WriteLine(q2[y_line]);
+                        corr[y_line] = corr_find(thirdbc, q2[y_line], rexx);
+                        Console.WriteLine(y_line + "." + "corr değeri  " + corr[y_line]);
+                        T[y_line, 1] = T[y_line, 1] - corr[y_line];
+                        //Console.WriteLine("1.iter sonucu   " + T[y_line, 1]);
+                        y_line = y_line + 1;
+                    }
+                    else if (y_line != y_step - 1 && y_line != 0 && y_line < y_step)
+                    {
+                        q2[y_line] = q2_find_middle(k_cons, dx, dy, T[y_line, x_line - 1], T[y_line - 1, x_line], T[y_line, x_line], T[y_line + 1, x_line]);
+                        //Console.WriteLine(q2[y_line]);
+                        corr[y_line] = corr_find(thirdbc, q2[y_line], rexx);
+                        Console.WriteLine(y_line + "." + "corr değeri  " + corr[y_line]);
+                        T[y_line, 1] = T[y_line, 1] - corr[y_line];
+                        //Console.WriteLine("1.iter sonucu   " + T[y_line, 1]);
+                        y_line = y_line + 1;
+                    }
+                    else if (y_line == y_step)
+                    {
+                        break;
+                    }
+                }
+                corr[1] = Math.Abs(corr[1]);
+                if (corr[1] < err)
+                {
+                    break;
+                }
+            }
+            StreamWriter yaz = File.AppendText("C:\\Users\\Sinan\\Desktop\\Visual Studio\\2d_conductıon_2d\\solution.out");
+            for (int i = 0; i < y_step; i++)
+            {
+                for (int j = 0; j < x_step; j++)
+                {
+                    T[i, j] = Math.Round(T[i, j], 2);
+                    yaz.Write(T[i, j] + "   ");
+
+                    Console.Write(T[i, j] + "   ");
+                    if (j == x_step-1)
+                    {
+                        Console.WriteLine();
+                        yaz.WriteLine("  ");
+                    }
+                }
+            }
+            yaz.Close();
+            yaz.Dispose();
+            for (int i = 0; i < x_step; i++)
+            {
+                for (int j = 0; j < y_step; j++)
+                {
+                    T[i, j] = Math.Round(T[i, j], 2);
+                    //Console.WriteLine("T" + "[" + j + "," + i + "]" + "sıcaklık   ");
+                    Console.WriteLine(T[j, i] + "   ");
+
+                }
+            }
+        }
+    }
+}

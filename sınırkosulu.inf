@@ -1,0 +1,7 @@
+malzeme iletim[W/(m*C)];	1;
+1. bölge: sıcaklık[C];		100;
+2. bölge: taşınım[W/(m^2*C)];	5;
+3. bölge: çıkan ısı[W];		0;
+4. bölge: taşınım[W/(m^2*C)];	7;
+hava sıcaklıgı[C];		20;
+
